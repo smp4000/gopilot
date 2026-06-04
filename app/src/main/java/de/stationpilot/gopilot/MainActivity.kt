@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import de.stationpilot.gopilot.data.repository.SessionStore
 import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
+import de.stationpilot.gopilot.ui.scanner.QrScannerScreen
 import de.stationpilot.gopilot.ui.setup.SetupScreen
 import de.stationpilot.gopilot.ui.setup.SetupViewModel
 import de.stationpilot.gopilot.ui.theme.GoPilotTheme
@@ -72,6 +73,8 @@ fun GoPilotNavHost() {
     }
 
     var currentScreen by remember { mutableStateOf(startScreen) }
+    var scannerCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
+    val setupVm: SetupViewModel = viewModel()
     val loginVm: LoginViewModel = viewModel()
 
     when (currentScreen) {
@@ -80,16 +83,35 @@ fun GoPilotNavHost() {
         "setup" -> SetupScreen(
             onSetupComplete = { currentScreen = "login" },
             onOpenCamera    = { onResult ->
-                // TODO: Kamera-Screen mit Ergebnis-Callback
-                // Platzhalter: direkt zurück mit leerem String
+                scannerCallback = onResult
+                currentScreen = "scanner_setup"
             },
-            vm = viewModel(),
+            vm = setupVm,
+        )
+
+        // ── QR-Scanner für Setup ──────────────────────────────────────────────
+        "scanner_setup" -> QrScannerScreen(
+            onResult = { code ->
+                scannerCallback?.invoke(code)
+                scannerCallback = null
+                currentScreen = "setup"
+            },
+            onBack = { currentScreen = "setup" },
+        )
+
+        // ── QR-Scanner für Mitarbeiter-Login ─────────────────────────────────
+        "scanner_login" -> QrScannerScreen(
+            onResult = { code ->
+                loginVm.loginWithScan(code)
+                currentScreen = "login"
+            },
+            onBack = { currentScreen = "login" },
         )
 
         // ── Mitarbeiter Login ─────────────────────────────────────────────────
         "login" -> LoginScreen(
             onLoginSuccess = { currentScreen = "home" },
-            onOpenCamera   = { currentScreen = "camera" },
+            onOpenCamera   = { currentScreen = "scanner_login" },
             vm             = loginVm,
         )
 
@@ -98,7 +120,7 @@ fun GoPilotNavHost() {
             // TODO: HomeScreen mit Kacheln + Navigation Drawer
             LoginScreen(
                 onLoginSuccess = { },
-                onOpenCamera   = { },
+                onOpenCamera   = { currentScreen = "scanner_login" },
                 vm             = loginVm,
             )
         }
