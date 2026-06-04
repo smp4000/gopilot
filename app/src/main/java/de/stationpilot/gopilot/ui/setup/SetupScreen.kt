@@ -36,12 +36,16 @@ fun SetupScreen(
         if (ui.success) onSetupComplete()
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BlueBackground)
-            .verticalScroll(rememberScrollState()),
+            .background(BlueBackground),
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+        ) {
         // ── Header ────────────────────────────────────────────────────────────
         Box(
             modifier = Modifier
@@ -213,7 +217,8 @@ fun SetupScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-    }
+        } // Ende Column
+    } // Ende Box
 }
 
 @Composable
