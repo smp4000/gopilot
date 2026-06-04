@@ -168,8 +168,11 @@ fun GoPilotNavHost() {
 
         // ── Home / Dashboard ──────────────────────────────────────────────────
         "home" -> HomeScreen(
-            onLogout = { currentScreen = "login" },
-            vm       = homeVm,
+            onLogout = {
+                loginVm.resetAfterLogout()
+                currentScreen = "login"
+            },
+            vm = homeVm,
         )
     }
 }

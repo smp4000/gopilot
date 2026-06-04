@@ -74,6 +74,14 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(error = null) }
     }
 
+    // Nach Logout aufrufen damit success-State zurückgesetzt wird
+    fun resetAfterLogout() {
+        viewModelScope.launch {
+            session.clearEmployee()
+            _ui.update { it.copy(success = false, codeInput = "", error = null) }
+        }
+    }
+
     private fun doLogin(method: String, value: String) {
         viewModelScope.launch {
             _ui.update { it.copy(isLoading = true, error = null) }
