@@ -27,9 +27,9 @@ import de.stationpilot.gopilot.ui.theme.GoPilotTheme
 class MainActivity : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
-    private var loginVm: LoginViewModel? = null
-    private var nfcWriterVmRef: NfcWriterViewModel? = null
-    private var currentScreenRef: String = "splash"
+    internal var loginVm: LoginViewModel? = null
+    internal var nfcWriterVmRef: NfcWriterViewModel? = null
+    internal var currentScreenRef: String = "splash"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
