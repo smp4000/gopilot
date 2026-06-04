@@ -208,7 +208,7 @@ fun InfoBannerCard(banner: InfoBanner, onDismiss: () -> Unit) {
     val (bg, border, icon, textColor) = when (banner.type) {
         BannerType.ERROR   -> listOf(Color(0xFFFEF2F2), Color(0xFFFCA5A5), Icons.Default.ErrorOutline,   Color(0xFFB91C1C))
         BannerType.WARNING -> listOf(Color(0xFFFFFBEB), Color(0xFFFCD34D), Icons.Default.WarningAmber,   Color(0xFF92400E))
-        BannerType.INFO    -> listOf(Color(0xFFEFF6FF), Color(0xFF93C5FD), Icons.Default.InfoOutlined,    Color(0xFF1E40AF))
+        BannerType.INFO    -> listOf(Color(0xFFEFF6FF), Color(0xFF93C5FD), Icons.Default.Info,    Color(0xFF1E40AF))
     }
 
     @Suppress("UNCHECKED_CAST")
