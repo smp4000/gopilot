@@ -64,8 +64,9 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun loginWithNfc(tag: Tag) {
-        // NFC-UID als Hex-String
+        // NFC-UID als Hex-String — erst ins Feld schreiben, dann einloggen
         val uid = tag.id.joinToString("") { "%02X".format(it) }
+        _ui.update { it.copy(codeInput = uid, error = null) }
         doLogin("nfc", uid)
     }
 
