@@ -23,12 +23,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import de.stationpilot.gopilot.data.repository.ConnectionStatus
 import de.stationpilot.gopilot.ui.theme.*
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onOpenCamera: () -> Unit,
+    connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
+    onRetryConnection: () -> Unit = {},
     vm: LoginViewModel = viewModel(),
 ) {
     val ui by vm.ui.collectAsState()
@@ -49,7 +52,10 @@ fun LoginScreen(
         )
 
         // ── Status-Banner ─────────────────────────────────────────────────────
-        ServerStatusBanner(isConnected = true)
+        ConnectionStatusBanner(
+            status = connectionStatus,
+            onRetry = onRetryConnection,
+        )
 
         // ── Fehler-Banner ─────────────────────────────────────────────────────
         AnimatedVisibility(visible = ui.error != null) {
@@ -232,28 +238,48 @@ fun GoPilotHeader(stationName: String, stationCity: String) {
 }
 
 @Composable
-fun ServerStatusBanner(isConnected: Boolean) {
+fun ConnectionStatusBanner(
+    status: ConnectionStatus,
+    onRetry: () -> Unit = {},
+) {
+    val (bgColor, icon, text, tint, showRetry) = when (status) {
+        ConnectionStatus.CONNECTED    -> BannerConfig(Color(0xFFE8F5E9), Icons.Default.CheckCircle,  "Server verbunden",                   SuccessColor, false)
+        ConnectionStatus.CHECKING     -> BannerConfig(Color(0xFFFFF8E1), Icons.Default.HourglassTop, "Verbindung wird geprüft...",          Color(0xFFF57F17), false)
+        ConnectionStatus.UNREACHABLE  -> BannerConfig(Color(0xFFFFEBEE), Icons.Default.WifiOff,       "Server nicht erreichbar",             ErrorColor,   true)
+        ConnectionStatus.TOKEN_INVALID-> BannerConfig(Color(0xFFFFEBEE), Icons.Default.ErrorOutline,  "Gerät nicht mehr registriert",        ErrorColor,   false)
+        ConnectionStatus.NO_DEVICE    -> BannerConfig(Color(0xFFFFEBEE), Icons.Default.DeviceUnknown, "Kein Gerät eingerichtet",             ErrorColor,   false)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (isConnected) Color(0xFFE8F5E9) else Color(0xFFFFEBEE))
+            .background(bgColor)
             .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Icon(
-            if (isConnected) Icons.Default.CheckCircle else Icons.Default.Error,
-            contentDescription = null,
-            tint = if (isConnected) SuccessColor else ErrorColor,
-            modifier = Modifier.size(18.dp),
-        )
-        Text(
-            text = if (isConnected) "Server verbunden" else "Keine Verbindung",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isConnected) SuccessColor else ErrorColor,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            Text(text, style = MaterialTheme.typography.bodyMedium, color = tint)
+        }
+        if (showRetry) {
+            TextButton(onClick = onRetry, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                Text("Erneut", style = MaterialTheme.typography.labelMedium, color = tint)
+            }
+        }
     }
 }
+
+private data class BannerConfig(
+    val bgColor: Color,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val text: String,
+    val tint: Color,
+    val showRetry: Boolean,
+)
 
 @Composable
 fun ErrorBanner(message: String) {

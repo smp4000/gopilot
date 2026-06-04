@@ -11,15 +11,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import de.stationpilot.gopilot.data.repository.SessionStore
+import de.stationpilot.gopilot.data.repository.ConnectionStatus
 import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
 import de.stationpilot.gopilot.ui.scanner.QrScannerScreen
 import de.stationpilot.gopilot.ui.setup.SetupScreen
 import de.stationpilot.gopilot.ui.setup.SetupViewModel
+import de.stationpilot.gopilot.ui.splash.SplashScreen
 import de.stationpilot.gopilot.ui.theme.GoPilotTheme
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
 
@@ -63,26 +62,33 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun GoPilotNavHost() {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val session = remember { SessionStore(context) }
+    val appVm: AppViewModel  = viewModel()
+    val appState by appVm.state.collectAsState()
 
-    // Startscreen ermitteln: Setup (kein Token) oder Login (Token vorhanden)
-    val startScreen = remember {
-        val token = runBlocking { session.deviceToken.first() }
-        if (token == null) "setup" else "login"
-    }
-
-    var currentScreen by remember { mutableStateOf(startScreen) }
+    var currentScreen by remember { mutableStateOf("splash") }
     var scannerCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
     val setupVm: SetupViewModel = viewModel()
     val loginVm: LoginViewModel = viewModel()
 
+    // Wenn Initialisierung fertig → zum Startscreen navigieren
+    LaunchedEffect(appState.isReady) {
+        if (appState.isReady) {
+            currentScreen = appState.startDestination
+        }
+    }
+
     when (currentScreen) {
 
-        // ── Gerät einrichten (erster Start) ──────────────────────────────────
+        // ── Splash / Verbindungscheck ─────────────────────────────────────────
+        "splash" -> SplashScreen()
+
+        // ── Gerät einrichten ─────────────────────────────────────────────────
         "setup" -> SetupScreen(
-            onSetupComplete = { currentScreen = "login" },
-            onOpenCamera    = { onResult ->
+            onSetupComplete = {
+                appVm.onDeviceRegistered()
+                currentScreen = "splash"
+            },
+            onOpenCamera = { onResult ->
                 scannerCallback = onResult
                 currentScreen = "scanner_setup"
             },
@@ -110,18 +116,22 @@ fun GoPilotNavHost() {
 
         // ── Mitarbeiter Login ─────────────────────────────────────────────────
         "login" -> LoginScreen(
-            onLoginSuccess = { currentScreen = "home" },
-            onOpenCamera   = { currentScreen = "scanner_login" },
-            vm             = loginVm,
+            onLoginSuccess      = { currentScreen = "home" },
+            onOpenCamera        = { currentScreen = "scanner_login" },
+            connectionStatus    = appState.connectionStatus,
+            onRetryConnection   = { appVm.retryConnection() },
+            vm                  = loginVm,
         )
 
         // ── Home / Dashboard ──────────────────────────────────────────────────
         "home" -> {
-            // TODO: HomeScreen mit Kacheln + Navigation Drawer
+            // TODO: HomeScreen
             LoginScreen(
-                onLoginSuccess = { },
-                onOpenCamera   = { currentScreen = "scanner_login" },
-                vm             = loginVm,
+                onLoginSuccess    = { },
+                onOpenCamera      = { currentScreen = "scanner_login" },
+                connectionStatus  = appState.connectionStatus,
+                onRetryConnection = { appVm.retryConnection() },
+                vm                = loginVm,
             )
         }
     }
