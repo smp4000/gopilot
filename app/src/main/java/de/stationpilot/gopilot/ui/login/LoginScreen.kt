@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.stationpilot.gopilot.data.repository.ConnectionStatus
 import de.stationpilot.gopilot.ui.theme.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun LoginScreen(
@@ -32,6 +34,7 @@ fun LoginScreen(
     onOpenCamera: () -> Unit,
     connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
     onRetryConnection: () -> Unit = {},
+    onResetDevice: () -> Unit = {},
     vm: LoginViewModel = viewModel(),
 ) {
     val ui by vm.ui.collectAsState()
@@ -47,8 +50,9 @@ fun LoginScreen(
     ) {
         // ── Header ────────────────────────────────────────────────────────────
         GoPilotHeader(
-            stationName = ui.stationName,
-            stationCity = ui.stationCity,
+            stationName   = ui.stationName,
+            stationCity   = ui.stationCity,
+            onResetDevice = onResetDevice,
         )
 
         // ── Status-Banner ─────────────────────────────────────────────────────
@@ -170,13 +174,17 @@ fun LoginScreen(
 }
 
 @Composable
-fun GoPilotHeader(stationName: String, stationCity: String) {
+fun GoPilotHeader(
+    stationName: String,
+    stationCity: String,
+    onResetDevice: () -> Unit = {},
+) {
+    var showResetDialog by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                Brush.horizontalGradient(listOf(BluePrimary, Color(0xFF1976D2)))
-            )
+            .background(Brush.horizontalGradient(listOf(BluePrimary, Color(0xFF1976D2))))
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Row(
@@ -185,7 +193,6 @@ fun GoPilotHeader(stationName: String, stationCity: String) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // App-Icon Kreis
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -193,35 +200,16 @@ fun GoPilotHeader(stationName: String, stationCity: String) {
                         .background(Color.White.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Default.LocalGasStation,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    Icon(Icons.Default.LocalGasStation, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                 }
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column {
-                    Text(
-                        text = "GoPilot",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                    )
+                    Text("GoPilot", style = MaterialTheme.typography.titleLarge, color = Color.White)
                     if (stationName.isNotEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(14.dp),
-                            )
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
                             Text(
-                                text = buildString {
-                                    append(stationName)
-                                    if (stationCity.isNotEmpty()) append(" $stationCity")
-                                },
+                                text = buildString { append(stationName); if (stationCity.isNotEmpty()) append(" $stationCity") },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.9f),
                             )
@@ -230,11 +218,98 @@ fun GoPilotHeader(stationName: String, stationCity: String) {
                 }
             }
 
-            IconButton(onClick = { /* TODO: Einstellungen */ }) {
-                Icon(Icons.Default.Refresh, contentDescription = "Neu verbinden", tint = Color.White)
+            // Reset-Button
+            IconButton(onClick = { showResetDialog = true }) {
+                Icon(Icons.Default.Refresh, contentDescription = "Gerät trennen", tint = Color.White)
             }
         }
     }
+
+    // Reset-Dialog mit Passwortschutz
+    if (showResetDialog) {
+        ResetDeviceDialog(
+            onConfirm = {
+                showResetDialog = false
+                onResetDevice()
+            },
+            onDismiss = { showResetDialog = false },
+        )
+    }
+}
+
+@Composable
+fun ResetDeviceDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    // Passwort = aktuelles Datum rückwärts, z.B. 20260604 → 40602620
+    val correctPassword = remember {
+        val date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        date.reversed()
+    }
+
+    var input by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf(false) }
+    var showPassword by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(Icons.Default.LinkOff, contentDescription = null, tint = ErrorColor, modifier = Modifier.size(32.dp))
+        },
+        title = {
+            Text("Gerät trennen", style = MaterialTheme.typography.titleLarge)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Das Gerät wird von der Tankstelle getrennt.\nBitte Sicherheitscode eingeben:",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it; error = false },
+                    label = { Text("Sicherheitscode") },
+                    isError = error,
+                    supportingText = if (error) {{ Text("Falscher Code", color = ErrorColor) }} else null,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility, null)
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                Text(
+                    "Hinweis: Heutiges Datum rückwärts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnSurface.copy(alpha = 0.5f),
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (input == correctPassword) {
+                        onConfirm()
+                    } else {
+                        error = true
+                        input = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = ErrorColor),
+                shape = RoundedCornerShape(10.dp),
+            ) {
+                Text("Trennen")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Abbrechen") }
+        },
+        shape = RoundedCornerShape(20.dp),
+    )
 }
 
 @Composable

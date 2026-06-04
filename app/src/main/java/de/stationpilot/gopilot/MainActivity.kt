@@ -9,9 +9,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.stationpilot.gopilot.data.repository.ConnectionStatus
+import de.stationpilot.gopilot.data.repository.SessionStore
 import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
 import de.stationpilot.gopilot.ui.scanner.QrScannerScreen
@@ -65,10 +67,20 @@ fun GoPilotNavHost() {
     val appVm: AppViewModel  = viewModel()
     val appState by appVm.state.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val session = remember { SessionStore(context) }
+
     var currentScreen by remember { mutableStateOf("splash") }
     var scannerCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
     val setupVm: SetupViewModel = viewModel()
     val loginVm: LoginViewModel = viewModel()
+
+    // Gerät trennen: Session löschen → zurück zu Setup
+    val onResetDevice: suspend () -> Unit = {
+        session.clearAll()
+        currentScreen = "setup"
+    }
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
 
     // Wenn Initialisierung fertig → zum Startscreen navigieren
     LaunchedEffect(appState.isReady) {
@@ -116,11 +128,12 @@ fun GoPilotNavHost() {
 
         // ── Mitarbeiter Login ─────────────────────────────────────────────────
         "login" -> LoginScreen(
-            onLoginSuccess      = { currentScreen = "home" },
-            onOpenCamera        = { currentScreen = "scanner_login" },
-            connectionStatus    = appState.connectionStatus,
-            onRetryConnection   = { appVm.retryConnection() },
-            vm                  = loginVm,
+            onLoginSuccess    = { currentScreen = "home" },
+            onOpenCamera      = { currentScreen = "scanner_login" },
+            connectionStatus  = appState.connectionStatus,
+            onRetryConnection = { appVm.retryConnection() },
+            onResetDevice     = { coroutineScope.launch { session.clearAll(); currentScreen = "setup" } },
+            vm                = loginVm,
         )
 
         // ── Home / Dashboard ──────────────────────────────────────────────────
@@ -131,6 +144,7 @@ fun GoPilotNavHost() {
                 onOpenCamera      = { currentScreen = "scanner_login" },
                 connectionStatus  = appState.connectionStatus,
                 onRetryConnection = { appVm.retryConnection() },
+                onResetDevice     = { coroutineScope.launch { session.clearAll(); currentScreen = "setup" } },
                 vm                = loginVm,
             )
         }
