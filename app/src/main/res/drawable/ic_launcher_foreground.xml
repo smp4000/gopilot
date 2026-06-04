@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Tankstellen-Symbol (Zapfpistole) in Weiß -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20 C44,20 36,28 36,38 L36,70 C36,74 39,77 43,77 L65,77 C69,77 72,74 72,70 L72,38 C72,28 64,20 54,20 Z M54,30 C58,30 62,34 62,38 L62,50 L46,50 L46,38 C46,34 50,30 54,30 Z" />
+    <!-- GO Text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,82 L44,92 L64,92 L64,82 Z" />
+</vector>
