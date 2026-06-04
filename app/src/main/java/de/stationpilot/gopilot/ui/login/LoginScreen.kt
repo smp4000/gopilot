@@ -282,12 +282,6 @@ fun ResetDeviceDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     shape = RoundedCornerShape(12.dp),
                 )
-                val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                Text(
-                    "Hinweis: Datum $today rückwärts eingeben",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OnSurface.copy(alpha = 0.5f),
-                )
             }
         },
         confirmButton = {
