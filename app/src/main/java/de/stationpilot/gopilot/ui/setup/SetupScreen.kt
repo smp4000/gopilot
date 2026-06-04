@@ -184,7 +184,7 @@ fun SetupScreen(
                     if (ui.isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.5.dp)
                     } else {
-                        Icon(Icons.Default.LinkOn, contentDescription = null, tint = Color.White)
+                        Icon(Icons.Default.Link, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("MIT TANKSTELLE VERBINDEN", style = MaterialTheme.typography.labelLarge, color = Color.White)
                     }
