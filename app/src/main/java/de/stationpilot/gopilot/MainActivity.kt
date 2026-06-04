@@ -16,6 +16,8 @@ import de.stationpilot.gopilot.data.repository.ConnectionStatus
 import de.stationpilot.gopilot.data.repository.SessionStore
 import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
+import de.stationpilot.gopilot.ui.admin.NfcWriterScreen
+import de.stationpilot.gopilot.ui.admin.NfcWriterViewModel
 import de.stationpilot.gopilot.ui.scanner.QrScannerScreen
 import de.stationpilot.gopilot.ui.setup.SetupScreen
 import de.stationpilot.gopilot.ui.setup.SetupViewModel
@@ -26,6 +28,8 @@ class MainActivity : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
     private var loginVm: LoginViewModel? = null
+    private var nfcWriterVmRef: NfcWriterViewModel? = null
+    private var currentScreenRef: String = "splash"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +51,14 @@ class MainActivity : ComponentActivity() {
         // NFC Foreground Dispatch aktivieren — App empfängt NFC-Tags bevorzugt
         nfcAdapter?.enableReaderMode(
             this,
-            { tag: Tag -> loginVm?.loginWithNfc(tag) },
+            { tag: Tag ->
+                // NFC-Tag je nach aktuellem Screen weiterleiten
+                if (currentScreenRef == "admin_nfc") {
+                    nfcWriterVmRef?.onNfcTag(tag)
+                } else {
+                    loginVm?.loginWithNfc(tag)
+                }
+            },
             NfcAdapter.FLAG_READER_NFC_A or
             NfcAdapter.FLAG_READER_NFC_B or
             NfcAdapter.FLAG_READER_NFC_F or
@@ -74,6 +85,15 @@ fun GoPilotNavHost() {
     var scannerCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
     val setupVm: SetupViewModel = viewModel()
     val loginVm: LoginViewModel = viewModel()
+    val nfcWriterVm: NfcWriterViewModel = viewModel()
+
+    // Refs für NFC-Routing in MainActivity
+    val activity = context as? MainActivity
+    LaunchedEffect(currentScreen) { activity?.currentScreenRef = currentScreen }
+    LaunchedEffect(Unit) {
+        activity?.loginVm = loginVm
+        activity?.nfcWriterVmRef = nfcWriterVm
+    }
 
     // Gerät trennen: Session löschen → zurück zu Setup
     val onResetDevice: suspend () -> Unit = {
@@ -126,6 +146,12 @@ fun GoPilotNavHost() {
             onBack = { currentScreen = "login" },
         )
 
+        // ── Admin: NFC Writer ─────────────────────────────────────────────────
+        "admin_nfc" -> NfcWriterScreen(
+            onBack = { currentScreen = "login" },
+            vm     = nfcWriterVm,
+        )
+
         // ── Mitarbeiter Login ─────────────────────────────────────────────────
         "login" -> LoginScreen(
             onLoginSuccess    = { currentScreen = "home" },
@@ -133,6 +159,7 @@ fun GoPilotNavHost() {
             connectionStatus  = appState.connectionStatus,
             onRetryConnection = { appVm.retryConnection() },
             onResetDevice     = { coroutineScope.launch { session.clearAll(); currentScreen = "setup" } },
+            onAdminArea       = { currentScreen = "admin_nfc" },
             vm                = loginVm,
         )
 
@@ -145,6 +172,7 @@ fun GoPilotNavHost() {
                 connectionStatus  = appState.connectionStatus,
                 onRetryConnection = { appVm.retryConnection() },
                 onResetDevice     = { coroutineScope.launch { session.clearAll(); currentScreen = "setup" } },
+                onAdminArea       = { currentScreen = "admin_nfc" },
                 vm                = loginVm,
             )
         }

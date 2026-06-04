@@ -124,4 +124,24 @@ interface GoPilotApi {
         @Header("Authorization") token: String,
         @Query("employee_ulid") employeeUlid: String,
     ): Response<NavigationResponse>
+
+    // ── Admin: NFC beschreiben ────────────────────────────────────────────────
+
+    @GET("mde/admin/stations")
+    suspend fun getStations(
+        @Header("Authorization") token: String,
+    ): Response<StationsResponse>
+
+    @GET("mde/admin/stations/{stationUlid}/employees")
+    suspend fun getEmployees(
+        @Header("Authorization") token: String,
+        @Path("stationUlid") stationUlid: String,
+    ): Response<EmployeesResponse>
+
+    @POST("mde/admin/employees/{employeeUlid}/nfc")
+    suspend fun saveNfc(
+        @Header("Authorization") token: String,
+        @Path("employeeUlid") employeeUlid: String,
+        @Body body: SaveNfcRequest,
+    ): Response<SaveNfcResponse>
 }

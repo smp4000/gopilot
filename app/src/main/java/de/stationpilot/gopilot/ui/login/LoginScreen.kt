@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.stationpilot.gopilot.data.repository.ConnectionStatus
 import de.stationpilot.gopilot.ui.theme.*
@@ -35,6 +37,7 @@ fun LoginScreen(
     connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
     onRetryConnection: () -> Unit = {},
     onResetDevice: () -> Unit = {},
+    onAdminArea: () -> Unit = {},
     vm: LoginViewModel = viewModel(),
 ) {
     val ui by vm.ui.collectAsState()
@@ -55,6 +58,7 @@ fun LoginScreen(
             stationName   = ui.stationName,
             stationCity   = ui.stationCity,
             onResetDevice = onResetDevice,
+            onAdminArea   = onAdminArea,
         )
 
         // ── Status-Banner ─────────────────────────────────────────────────────
@@ -175,13 +179,16 @@ fun LoginScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GoPilotHeader(
     stationName: String,
     stationCity: String,
     onResetDevice: () -> Unit = {},
+    onAdminArea: () -> Unit = {},
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var showAdminDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -199,7 +206,11 @@ fun GoPilotHeader(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = { showAdminDialog = true },
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Default.LocalGasStation, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
@@ -227,14 +238,19 @@ fun GoPilotHeader(
         }
     }
 
-    // Reset-Dialog mit Passwortschutz
+    // Reset-Dialog
     if (showResetDialog) {
         ResetDeviceDialog(
-            onConfirm = {
-                showResetDialog = false
-                onResetDevice()
-            },
+            onConfirm = { showResetDialog = false; onResetDevice() },
             onDismiss = { showResetDialog = false },
+        )
+    }
+
+    // Admin-Zugang Dialog
+    if (showAdminDialog) {
+        AdminAccessDialog(
+            onConfirm = { showAdminDialog = false; onAdminArea() },
+            onDismiss = { showAdminDialog = false },
         )
     }
 }
@@ -343,6 +359,55 @@ fun ConnectionStatusBanner(
             }
         }
     }
+}
+
+@Composable
+fun AdminAccessDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val correctPassword = remember {
+        LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")).reversed()
+    }
+    var input by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf(false) }
+    var showPassword by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.AdminPanelSettings, null, tint = Color(0xFF6A1B9A), modifier = Modifier.size(32.dp)) },
+        title = { Text("Admin-Bereich", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("NFC-Chips beschreiben und Mitarbeiter verwalten.", style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it; error = false },
+                    label = { Text("Sicherheitscode") },
+                    isError = error,
+                    supportingText = if (error) {{ Text("Falscher Code", color = ErrorColor) }} else null,
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility, null)
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    shape = RoundedCornerShape(12.dp),
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { if (input == correctPassword) onConfirm() else { error = true; input = "" } },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A1B9A)),
+                shape = RoundedCornerShape(10.dp),
+            ) { Text("Öffnen") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Abbrechen") } },
+        shape = RoundedCornerShape(20.dp),
+    )
 }
 
 private data class BannerConfig(
