@@ -109,14 +109,23 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun buildTiles(perms: List<String>): List<HomeTile> {
         val tiles = mutableListOf<HomeTile>()
-        tiles += HomeTile("shift", "Schicht starten", "play_circle", TileColor.BLUE)
-        if (has(perms, "partner.keys")) tiles += HomeTile("keys", "Schlüssel", "key", TileColor.PURPLE)
-        if (has(perms, "employee.station", "partner.stations")) {
-            tiles += HomeTile("tank", "Tankkontrolle", "local_gas_station", TileColor.BLUE)
-            tiles += HomeTile("incident", "Störung", "warning", TileColor.RED)
+        tiles += HomeTile("shift",      "Schichtabrechnung",  "receipt_long",      TileColor.BLUE)
+        if (has(perms, "employee.station.shift"))    tiles += HomeTile("tank",      "Tankbetrug",         "local_gas_station", TileColor.BLUE)
+        if (has(perms, "employee.station.tank"))     tiles += HomeTile("temp",      "Temperaturen",       "thermostat",        TileColor.BLUE)
+        if (has(perms, "employee.shop.inventory"))   tiles += HomeTile("inventory", "MHD-Kontrolle",      "schedule",          TileColor.BLUE)
+        if (has(perms, "employee.shop.cashier"))     tiles += HomeTile("cashier",   "Kassenabschluss",    "point_of_sale",     TileColor.BLUE)
+        if (has(perms, "employee.shop"))             tiles += HomeTile("abschr",    "Abschriften",        "inventory",         TileColor.BLUE)
+        if (has(perms, "employee.station.incident")) tiles += HomeTile("incident",  "Störung melden",     "warning",           TileColor.RED)
+        if (has(perms, "employee.bistro"))           tiles += HomeTile("bistro",    "Bistro",             "restaurant",        TileColor.ORANGE)
+        if (has(perms, "partner.keys"))              tiles += HomeTile("keys",      "Schlüssel",          "key",               TileColor.PURPLE)
+        // Wenn keine spez. Permissions → Standard-Kacheln zeigen
+        if (tiles.size <= 1) {
+            tiles += HomeTile("tank",      "Tankbetrug",         "local_gas_station", TileColor.BLUE)
+            tiles += HomeTile("temp",      "Temperaturen",       "thermostat",        TileColor.BLUE)
+            tiles += HomeTile("inventory", "MHD-Kontrolle",      "schedule",          TileColor.BLUE)
+            tiles += HomeTile("abschr",    "Abschriften",        "inventory",         TileColor.BLUE)
+            tiles += HomeTile("info",      "Artikelinfo",        "receipt_long",      TileColor.BLUE)
         }
-        if (has(perms, "employee.shop")) tiles += HomeTile("cashier", "Kassenabschluss", "point_of_sale", TileColor.GREEN)
-        if (has(perms, "employee.bistro")) tiles += HomeTile("bistro", "Bestellungen", "restaurant", TileColor.ORANGE)
         return tiles
     }
 
