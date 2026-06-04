@@ -16,12 +16,12 @@ android {
         versionName = "1.0.0"
 
         // API Base URL — für lokale Entwicklung anpassen
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.100/stationpilot4/public/api/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.178.97:8000/api/\"")
     }
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.100/stationpilot4/public/api/\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.178.97:8000/api/\"")
             isDebuggable = true
         }
         release {
