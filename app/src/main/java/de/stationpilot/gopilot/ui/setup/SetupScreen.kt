@@ -44,7 +44,9 @@ fun SetupScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .imePadding(),
         ) {
         // ── Header ────────────────────────────────────────────────────────────
         Box(

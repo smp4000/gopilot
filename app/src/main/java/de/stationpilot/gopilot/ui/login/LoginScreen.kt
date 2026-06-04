@@ -46,7 +46,9 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BlueBackground),
+            .background(BlueBackground)
+            .navigationBarsPadding()
+            .imePadding(),
     ) {
         // ── Header ────────────────────────────────────────────────────────────
         GoPilotHeader(
