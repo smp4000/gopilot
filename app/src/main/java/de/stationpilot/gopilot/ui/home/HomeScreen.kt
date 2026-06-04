@@ -57,8 +57,15 @@ fun HomeScreen(
         )
     }
 
-    LaunchedEffect(ui.isReady) {
-        if (ui.isReady && ui.employeeName.isEmpty()) onLogout()
+    // Erst wenn Mitarbeiter einmal geladen war und dann verschwindet → abmelden
+    var wasLoggedIn by remember { mutableStateOf(false) }
+    LaunchedEffect(ui.isReady, ui.employeeName) {
+        if (ui.isReady && ui.employeeName.isNotEmpty()) {
+            wasLoggedIn = true
+        }
+        if (wasLoggedIn && ui.isReady && ui.employeeName.isEmpty()) {
+            onLogout()
+        }
     }
 
     ModalNavigationDrawer(
