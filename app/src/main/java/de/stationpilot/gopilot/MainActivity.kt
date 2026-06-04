@@ -18,6 +18,8 @@ import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
 import de.stationpilot.gopilot.ui.admin.NfcWriterScreen
 import de.stationpilot.gopilot.ui.admin.NfcWriterViewModel
+import de.stationpilot.gopilot.ui.home.HomeScreen
+import de.stationpilot.gopilot.ui.home.HomeViewModel
 import de.stationpilot.gopilot.ui.scanner.QrScannerScreen
 import de.stationpilot.gopilot.ui.setup.SetupScreen
 import de.stationpilot.gopilot.ui.setup.SetupViewModel
@@ -86,6 +88,7 @@ fun GoPilotNavHost() {
     val setupVm: SetupViewModel = viewModel()
     val loginVm: LoginViewModel = viewModel()
     val nfcWriterVm: NfcWriterViewModel = viewModel()
+    val homeVm: HomeViewModel = viewModel()
 
     // Refs für NFC-Routing in MainActivity
     val activity = context as? MainActivity
@@ -164,17 +167,9 @@ fun GoPilotNavHost() {
         )
 
         // ── Home / Dashboard ──────────────────────────────────────────────────
-        "home" -> {
-            // TODO: HomeScreen
-            LoginScreen(
-                onLoginSuccess    = { },
-                onOpenCamera      = { currentScreen = "scanner_login" },
-                connectionStatus  = appState.connectionStatus,
-                onRetryConnection = { appVm.retryConnection() },
-                onResetDevice     = { coroutineScope.launch { session.clearAll(); currentScreen = "setup" } },
-                onAdminArea       = { currentScreen = "admin_nfc" },
-                vm                = loginVm,
-            )
-        }
+        "home" -> HomeScreen(
+            onLogout = { currentScreen = "login" },
+            vm       = homeVm,
+        )
     }
 }

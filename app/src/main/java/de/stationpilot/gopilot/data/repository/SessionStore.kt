@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import de.stationpilot.gopilot.data.api.DeviceInfo
 import de.stationpilot.gopilot.data.api.EmployeeInfo
+import androidx.datastore.preferences.core.Preferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -33,6 +34,7 @@ class SessionStore(private val context: Context) {
         val KEY_PERMISSIONS     = stringPreferencesKey("permissions")  // JSON-Array als String
     }
 
+    val data: Flow<Preferences> = context.dataStore.data
     val deviceToken: Flow<String?> = context.dataStore.data.map { it[KEY_DEVICE_TOKEN] }
     val stationName: Flow<String?> = context.dataStore.data.map { it[KEY_STATION_NAME] }
     val stationCity: Flow<String?> = context.dataStore.data.map { it[KEY_STATION_CITY] }
