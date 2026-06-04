@@ -11,9 +11,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import de.stationpilot.gopilot.data.repository.SessionStore
 import de.stationpilot.gopilot.ui.login.LoginScreen
 import de.stationpilot.gopilot.ui.login.LoginViewModel
+import de.stationpilot.gopilot.ui.setup.SetupScreen
+import de.stationpilot.gopilot.ui.setup.SetupViewModel
 import de.stationpilot.gopilot.ui.theme.GoPilotTheme
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
 
@@ -57,20 +62,40 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun GoPilotNavHost() {
-    // TODO: Navigation mit NavController erweitern wenn weitere Screens dazukommen
-    // Aktuell: nur Login-Screen als Startpunkt
-    var currentScreen by remember { mutableStateOf("login") }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val session = remember { SessionStore(context) }
+
+    // Startscreen ermitteln: Setup (kein Token) oder Login (Token vorhanden)
+    val startScreen = remember {
+        val token = runBlocking { session.deviceToken.first() }
+        if (token == null) "setup" else "login"
+    }
+
+    var currentScreen by remember { mutableStateOf(startScreen) }
     val loginVm: LoginViewModel = viewModel()
 
     when (currentScreen) {
+
+        // ── Gerät einrichten (erster Start) ──────────────────────────────────
+        "setup" -> SetupScreen(
+            onSetupComplete = { currentScreen = "login" },
+            onOpenCamera    = { onResult ->
+                // TODO: Kamera-Screen mit Ergebnis-Callback
+                // Platzhalter: direkt zurück mit leerem String
+            },
+            vm = viewModel(),
+        )
+
+        // ── Mitarbeiter Login ─────────────────────────────────────────────────
         "login" -> LoginScreen(
             onLoginSuccess = { currentScreen = "home" },
             onOpenCamera   = { currentScreen = "camera" },
             vm             = loginVm,
         )
+
+        // ── Home / Dashboard ──────────────────────────────────────────────────
         "home" -> {
-            // TODO: HomeScreen (Kacheln + Navigation Drawer)
-            // Platzhalter bis HomeScreen implementiert ist
+            // TODO: HomeScreen mit Kacheln + Navigation Drawer
             LoginScreen(
                 onLoginSuccess = { },
                 onOpenCamera   = { },
