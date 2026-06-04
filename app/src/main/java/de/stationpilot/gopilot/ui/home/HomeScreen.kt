@@ -4,10 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -118,84 +117,68 @@ fun HomeScreen(
             },
             containerColor = Color(0xFFF2F5FA),
         ) { padding ->
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .navigationBarsPadding(),
-                contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 // ── Begrüßung ──────────────────────────────────────────────
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White)
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                    ) {
-                        Text(
-                            text = "Hallo, ${ui.employeeName}",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A1A2E),
-                        )
-                        if (ui.stationName.isNotEmpty()) {
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = ui.stationName,
-                                fontSize = 13.sp,
-                                color = Color(0xFF6B7280),
-                            )
-                        }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                ) {
+                    Text(
+                        text = "Hallo, ${ui.employeeName}",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A1A2E),
+                    )
+                    if (ui.stationName.isNotEmpty()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(ui.stationName, fontSize = 13.sp, color = Color(0xFF6B7280))
                     }
-                    HorizontalDivider(color = Color(0xFFE5E7EB), thickness = 0.5.dp)
                 }
+                HorizontalDivider(color = Color(0xFFE5E7EB), thickness = 0.5.dp)
 
                 // ── Info-Banner ────────────────────────────────────────────
                 if (banners.isNotEmpty()) {
-                    item {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            banners.forEach { banner ->
-                                AnimatedVisibility(
-                                    visible = true,
-                                    exit = fadeOut() + slideOutHorizontally(),
-                                ) {
-                                    InfoBannerCard(
-                                        banner = banner,
-                                        onDismiss = { banners = banners.filter { it.id != banner.id } },
-                                    )
-                                }
-                            }
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        banners.forEach { banner ->
+                            InfoBannerCard(
+                                banner = banner,
+                                onDismiss = { banners = banners.filter { it.id != banner.id } },
+                            )
                         }
                     }
                 }
 
-                // ── Kacheln Überschrift ────────────────────────────────────
-                item {
-                    Spacer(Modifier.height(4.dp))
-                }
+                Spacer(Modifier.height(8.dp))
 
                 // ── Kacheln ────────────────────────────────────────────────
-                item {
-                    if (ui.tiles.isNotEmpty()) {
-                        TileGrid(tiles = ui.tiles)
-                    } else {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(32.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.GridView, null, tint = Color(0xFFD1D5DB), modifier = Modifier.size(48.dp))
-                                Spacer(Modifier.height(8.dp))
-                                Text("Keine Kacheln verfügbar", color = Color(0xFF9CA3AF), fontSize = 14.sp)
-                                Text("Kontaktiere deinen Administrator", color = Color(0xFFD1D5DB), fontSize = 12.sp)
-                            }
+                if (ui.tiles.isNotEmpty()) {
+                    TileGrid(tiles = ui.tiles)
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.GridView, null, tint = Color(0xFFD1D5DB), modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text("Keine Kacheln verfügbar", color = Color(0xFF9CA3AF), fontSize = 14.sp)
+                            Text("Kontaktiere deinen Administrator", color = Color(0xFFD1D5DB), fontSize = 12.sp)
                         }
                     }
                 }
+
+                Spacer(Modifier.height(24.dp))
             }
         }
     }

@@ -71,8 +71,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun buildNav(perms: List<String>): List<NavItem> {
         val nav = mutableListOf<NavItem>()
-
         nav += NavItem("home", "Startseite", "home")
+
+        if (perms.isEmpty()) return nav  // Keine Permissions = nur Startseite
 
         if (has(perms, "employee.bistro", "partner.bistro")) {
             nav += NavItem("bistro", "Bistro", "restaurant", listOf(
@@ -108,27 +109,25 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     // ── Kacheln aufbauen ─────────────────────────────────────────────────────
 
     private fun buildTiles(perms: List<String>): List<HomeTile> {
+        // Keine Permissions = leere Kacheln (nicht alles anzeigen → ANR vermeiden)
+        if (perms.isEmpty()) return listOf(
+            HomeTile("shift", "Schichtabrechnung", "receipt_long", TileColor.BLUE),
+        )
+
         val tiles = mutableListOf<HomeTile>()
-        tiles += HomeTile("shift",      "Schichtabrechnung",  "receipt_long",      TileColor.BLUE)
-        if (has(perms, "employee.station.shift"))    tiles += HomeTile("tank",      "Tankbetrug",         "local_gas_station", TileColor.BLUE)
-        if (has(perms, "employee.station.tank"))     tiles += HomeTile("temp",      "Temperaturen",       "thermostat",        TileColor.BLUE)
-        if (has(perms, "employee.shop.inventory"))   tiles += HomeTile("inventory", "MHD-Kontrolle",      "schedule",          TileColor.BLUE)
-        if (has(perms, "employee.shop.cashier"))     tiles += HomeTile("cashier",   "Kassenabschluss",    "point_of_sale",     TileColor.BLUE)
-        if (has(perms, "employee.shop"))             tiles += HomeTile("abschr",    "Abschriften",        "inventory",         TileColor.BLUE)
-        if (has(perms, "employee.station.incident")) tiles += HomeTile("incident",  "Störung melden",     "warning",           TileColor.RED)
-        if (has(perms, "employee.bistro"))           tiles += HomeTile("bistro",    "Bistro",             "restaurant",        TileColor.ORANGE)
-        if (has(perms, "partner.keys"))              tiles += HomeTile("keys",      "Schlüssel",          "key",               TileColor.PURPLE)
-        // Wenn keine spez. Permissions → Standard-Kacheln zeigen
-        if (tiles.size <= 1) {
-            tiles += HomeTile("tank",      "Tankbetrug",         "local_gas_station", TileColor.BLUE)
-            tiles += HomeTile("temp",      "Temperaturen",       "thermostat",        TileColor.BLUE)
-            tiles += HomeTile("inventory", "MHD-Kontrolle",      "schedule",          TileColor.BLUE)
-            tiles += HomeTile("abschr",    "Abschriften",        "inventory",         TileColor.BLUE)
-            tiles += HomeTile("info",      "Artikelinfo",        "receipt_long",      TileColor.BLUE)
-        }
+        tiles += HomeTile("shift", "Schichtabrechnung", "receipt_long", TileColor.BLUE)
+        if (has(perms, "employee.station.shift"))    tiles += HomeTile("tank",      "Tankbetrug",      "local_gas_station", TileColor.BLUE)
+        if (has(perms, "employee.station.tank"))     tiles += HomeTile("temp",      "Temperaturen",    "thermostat",        TileColor.BLUE)
+        if (has(perms, "employee.shop.inventory"))   tiles += HomeTile("inventory", "MHD-Kontrolle",   "schedule",          TileColor.BLUE)
+        if (has(perms, "employee.shop.cashier"))     tiles += HomeTile("cashier",   "Kassenabschluss", "point_of_sale",     TileColor.BLUE)
+        if (has(perms, "employee.shop"))             tiles += HomeTile("abschr",    "Abschriften",     "inventory",         TileColor.BLUE)
+        if (has(perms, "employee.station.incident")) tiles += HomeTile("incident",  "Störung melden",  "warning",           TileColor.RED)
+        if (has(perms, "employee.bistro"))           tiles += HomeTile("bistro",    "Bistro",          "restaurant",        TileColor.ORANGE)
+        if (has(perms, "partner.keys"))              tiles += HomeTile("keys",      "Schlüssel",       "key",               TileColor.PURPLE)
         return tiles
     }
 
+    // Nur true wenn perms nicht leer UND mindestens ein Prefix passt
     private fun has(perms: List<String>, vararg prefixes: String): Boolean =
-        perms.isEmpty() || prefixes.any { prefix -> perms.any { it.startsWith(prefix) } }
+        perms.isNotEmpty() && prefixes.any { prefix -> perms.any { it.startsWith(prefix) } }
 }
