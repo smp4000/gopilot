@@ -50,7 +50,13 @@ class NfcWriterViewModel(app: Application) : AndroidViewModel(app) {
     init {
         val nfcAvail = NfcAdapter.getDefaultAdapter(app) != null
         _ui.update { it.copy(nfcAvailable = nfcAvail) }
-        loadStations()
+        // Stationen NICHT beim Start laden — erst wenn Screen geöffnet wird
+    }
+
+    fun onScreenOpened() {
+        if (_ui.value.stations.isEmpty()) {
+            loadStations()
+        }
     }
 
     private fun loadStations() {

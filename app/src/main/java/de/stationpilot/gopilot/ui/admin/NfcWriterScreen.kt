@@ -1,5 +1,6 @@
 package de.stationpilot.gopilot.ui.admin
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +33,8 @@ fun NfcWriterScreen(
     vm: NfcWriterViewModel = viewModel(),
 ) {
     val ui by vm.ui.collectAsState()
+
+    LaunchedEffect(Unit) { vm.onScreenOpened() }
 
     Column(
         modifier = Modifier
